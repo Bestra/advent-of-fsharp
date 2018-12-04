@@ -12,30 +12,31 @@ module Day1 =
 
     let readFile = 
       let lines = System.IO.File.ReadLines("./inputs/1.txt")
-      Seq.map parseEntry lines
+      Seq.map parseEntry lines |> Seq.toArray
 
     let part1 =
+      printfn "Finding part 1"
       let sum = Seq.sum readFile
       printfn "%i" sum
 
     type SearchState = {
-      seen: Set<int>
+      seen: HashSet<int>
       previous: int
     }
 
-    let rec repeat items = 
-      seq { yield! items  
-            yield! repeat items }
-
-    let rec reachedTwice (itemSeq: seq<int>) (state: SearchState) = 
-      let currentFreq = Seq.head itemSeq 
+    let rec reachedTwice (array: array<int>) count arrayLength (state: SearchState) = 
+      let idx = count % arrayLength
+      let currentFreq = array.[idx]
       let newFreq = state.previous + currentFreq
-      match Set.contains newFreq state.seen with
+      printfn "%i, %i items seen" newFreq state.seen.Count
+      match state.seen.Contains newFreq with
       | true ->
         newFreq
       | false -> 
-        let nextState = {seen = Set.add newFreq state.seen; previous = newFreq}
-        reachedTwice (Seq.tail itemSeq) nextState
+        state.seen.Add newFreq |> ignore
+        let nextState = {seen = state.seen; previous = newFreq}
+        reachedTwice array (count + 1) arrayLength nextState
 
     let part2 =
-      reachedTwice (repeat [3; 3; 4; -2; -4]) {seen = Set.empty; previous = 0} |> printfn "%i"
+      printfn "Finding part 2"
+      reachedTwice readFile 0 (Array.length readFile) {seen = new HashSet<int>(); previous = 0} |> printfn "%i"
