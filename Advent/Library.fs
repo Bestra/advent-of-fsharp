@@ -1,11 +1,6 @@
 namespace Advent
 open System.Collections.Generic
 
-module Say =
-    let hello name =
-        printfn "Hello %s" name
-
-
 module Day1 = 
     let parseEntry (e: string) = 
       int e
@@ -118,19 +113,47 @@ module Day2 =
       match diffStringWithList string list with
       | Some(s) -> s 
       | None -> 
-        let nextString :: rest = list
-        findMatch nextString rest
+        match list with
+        | nextString :: rest -> findMatch nextString rest
+        | _ -> failwith "empty list"
 
-    let firstString :: firstList = input
-
-    findMatch firstString firstList
+    match input with
+    | firstString :: firstList -> 
+      findMatch firstString firstList
+    | _ -> failwith "Day 2 input is not a proper list"
 
   let part2 () =
     let input = readFile () |> Seq.toList
     findListMatch input
-    
-      
-
   
+
+module Day3 =
+  open FParsec
+  let readFile () = 
+    System.IO.File.ReadLines("./inputs/3.txt")
+    
+
+  type Claim = {
+    id: int;
+    coords: (int * int);
+    size: (int * int)
+  }
+
+  let parseClaim: Parser<Claim, unit> =
+    let tuple a b = (a, b)
+    let pint = pint16 |>> (fun i -> int i)
+    let str s = pstring s
+    let claimId = str "#" >>. pint
+    let coords = pipe2 (pint .>> str ",") (pint .>> str ":") tuple
+    let size = pipe2 (pint .>> str("x")) pint tuple
+
+    pipe3 (claimId .>> spaces .>> str "@" .>> spaces) (coords .>> spaces) size (fun claim co s -> 
+      { id = claim; coords = co; size = s}
+    )
+
+  let claimFromString s = 
+    match run parseClaim s with
+    | Success(claim, _, _) -> claim
+    | Failure(error, _, _) -> failwithf "Parsing failed: %A" error
 
 
